@@ -101,6 +101,9 @@ if __name__ == "__main__":
     conflicting contemporaneous links as corresponding straight lines. In each case, 
     the link color refers to the MCI value in val_matrix. Also here, if val_matrix is 
     not already symmetric for contemporaneous values, the maximum absolute value is shown.
+    
+    `val_matrix=results['val_matrix']` can be used to indicate the strength of links. 
+    Use `val_matrix=None` if we want edges in the same colour.
     """
 
     # Plot time series graph
