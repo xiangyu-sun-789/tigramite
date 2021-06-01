@@ -182,6 +182,15 @@ if __name__ == "__main__":
     Set it to `None` if we want edges in the same colour.
     
     MCI: momentary conditional independence
+    
+    ``graph[i,j,0]='o-o'`` and ``graph[j,i,0]='o-o'`` denotes an unoriented, contemporaneous 
+    adjacency $X^i_{t} - X^j_t$ indicating that the collider and orientation rules could not 
+    be applied (Markov equivalence)
+    
+    ``graph[i,j,0]='x-x'`` and ``graph[j,i,0]='x-x'`` denotes a conflicting, contemporaneous 
+    adjacency between $X^i_{t}$ and $X^j_t$ indicating that the directionality is undecided 
+    due to conflicting orientation rules
+    
     """
 
     # Plot time series graph for PCMCI+
