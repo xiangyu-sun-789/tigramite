@@ -183,6 +183,7 @@ if __name__ == "__main__":
     
     MCI: momentary conditional independence
     
+    For PCMCI+:
     ``graph[i,j,0]='o-o'`` and ``graph[j,i,0]='o-o'`` denotes an unoriented, contemporaneous 
     adjacency $X^i_{t} - X^j_t$ indicating that the collider and orientation rules could not 
     be applied (Markov equivalence)
