@@ -7,6 +7,8 @@ import sklearn
 # import tigramite
 import sys
 
+from neurips2020.lpcmci import LPCMCI
+
 sys.path.insert(1, "/Users/shawnxys/Development/tigramite")
 
 from tigramite import data_processing as pp
@@ -78,22 +80,57 @@ def generate_data():
 if __name__ == "__main__":
     dataframe, _, var_names = generate_data()
 
-    parcorr = ParCorr(significance='analytic')
-
-    pcmci = PCMCI(
-        dataframe=dataframe,
-        cond_ind_test=parcorr,
-        verbosity=1)
-
     tau_max = 1  # the number of lags
 
     pc_alpha = 0.01
-    pcmci.verbosity = 1  # shows the results without showing steps
 
-    results = pcmci.run_pcmciplus(tau_min=0, tau_max=tau_max, pc_alpha=pc_alpha)
+    # TODO: use nonlinear conditional independence test
+    cond_ind_test = ParCorr(significance='analytic')
 
-    print("Graph")
-    print(results['graph'])
+    """
+    ##########################
+    ##### PCMCI+ #####
+    ##########################
+    """
+
+    pcmci = PCMCI(
+        dataframe=dataframe,
+        cond_ind_test=cond_ind_test,
+        verbosity=0)
+
+    pcmci.verbosity = 0  # shows the results without showing steps
+
+    results_pcmciplus = pcmci.run_pcmciplus(tau_min=0, tau_max=tau_max, pc_alpha=pc_alpha)
+
+    graph_pcmciplus = results_pcmciplus['graph']
+    val_matrix_pcmciplus = results_pcmciplus['val_matrix']
+
+    """
+    ##########################
+    ##### LPCMCI #####
+    ##########################
+    """
+
+    lpcmci = LPCMCI(
+        dataframe=dataframe,
+        cond_ind_test=cond_ind_test)
+
+    _ = lpcmci.run_lpcmci(
+        tau_max=tau_max,
+        pc_alpha=pc_alpha,
+        max_p_non_ancestral=3,
+        n_preliminary_iterations=4,  # k, not the number of lags
+        prelim_only=False,
+        verbosity=0)
+
+    graph_lpcmci = lpcmci.graph
+    val_matrix_lpcmci = lpcmci.val_min_matrix
+
+    """
+    ##########################
+    ##### Draw Graph #####
+    ##########################
+    """
 
     """
     In the time series graph, each entry in graph can be directly visualized. 
@@ -102,17 +139,28 @@ if __name__ == "__main__":
     the link color refers to the MCI value in val_matrix. Also here, if val_matrix is 
     not already symmetric for contemporaneous values, the maximum absolute value is shown.
     
-    `val_matrix=results['val_matrix']` can be used to indicate the strength of links. 
-    Use `val_matrix=None` if we want edges in the same colour.
+    `val_matrix` can be used to indicate the strength of links. 
+    Set it to `None` if we want edges in the same colour.
     """
 
-    # Plot time series graph
+    # Plot time series graph for PCMCI+
     tp.plot_time_series_graph(
         figsize=(8, 8),
         node_size=0.05,
-        val_matrix=results['val_matrix'],
-        link_matrix=results['graph'],
+        val_matrix=val_matrix_pcmciplus,
+        link_matrix=graph_pcmciplus,
         var_names=var_names,
-        link_colorbar_label='MCI',
+        link_colorbar_label='MCI for PCMCI+',
+    )
+    plt.show()
+
+    # Plot time series graph for LPCMCI
+    tp.plot_time_series_graph(
+        figsize=(8, 8),
+        node_size=0.05,
+        val_matrix=val_matrix_lpcmci,
+        link_matrix=graph_lpcmci,
+        var_names=var_names,
+        link_colorbar_label='MCI for LPCMCI',
     )
     plt.show()
