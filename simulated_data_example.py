@@ -1,11 +1,14 @@
 # Imports
 import numpy as np
 import matplotlib
+import pandas as pd
 from matplotlib import pyplot as plt
 import sklearn
 
 # import tigramite
 import sys
+
+from sklearn import preprocessing
 
 from neurips2020.lpcmci import LPCMCI
 
@@ -14,16 +17,11 @@ sys.path.insert(1, "/Users/shawnxys/Development/tigramite")
 from tigramite import data_processing as pp
 from tigramite import plotting as tp
 from tigramite.pcmci import PCMCI
-
-# https://github.com/xiangyu-sun-789/tigramite#overview
-"""
-Conditional independence test 	        Assumptions
-ParCorr 	                            univariate, continuous, linear Gaussian dependencies
-GPDC / GPDCtorch 	                    univariate, continuous, additive dependencies
-CMIknn 	                                multivariate, continuous, general dependencies
-CMIsymb 	                            univariate, discrete/categorical dependencies
-"""
 from tigramite.independence_tests import ParCorr, GPDC, CMIknn, CMIsymb
+
+
+# import pyximport; pyximport.install()
+# from tigramite import tigramite_cython_code
 
 
 def generate_data():
@@ -66,7 +64,7 @@ def generate_data():
 
     data, nonstationarity_indicator = pp.structural_causal_process(
         links=links, T=T, noises=noises, seed=seed)
-    T, N = data.shape
+    T, N = data.shape  # (number of time steps, number of variables)
 
     # Initialize dataframe object, specify variable names
     var_names = [r'$X^{%d}$' % j for j in range(N)]
@@ -77,15 +75,56 @@ def generate_data():
     return dataframe, true_graph, var_names
 
 
+def load_sports_data():
+    fileName = "/Users/shawnxys/Development/Data/preprocessed_causal_sports_data_by_games/17071/features_shots_rewards.csv"
+
+    features_shots_rewards_df = pd.read_csv(fileName)
+    # rename column name
+    features_shots_rewards_df = features_shots_rewards_df.rename(columns={'reward': 'goal'})
+
+    X = features_shots_rewards_df.to_numpy()  # (number of time steps, number of variables)
+
+    # data standardization
+    scaler = preprocessing.StandardScaler().fit(X)
+    normalized_X = scaler.transform(X)  # (number of time steps, number of variables)
+
+    print('feature std after standardization: ', normalized_X.std(axis=0))
+    assert (normalized_X.std(axis=0).round(
+        decimals=3) == 1).all()  # make sure all the variances are (very close to) 1
+
+    T, N = normalized_X.shape  # (number of time steps, number of variables)
+
+    assert T == 4021 and N == 12
+
+    # Initialize dataframe object, specify variable names
+    var_names = [s for s in features_shots_rewards_df.columns]
+    dataframe = pp.DataFrame(normalized_X, var_names=var_names)
+
+    true_graph = None
+
+    return dataframe, true_graph, var_names
+
+
 if __name__ == "__main__":
-    dataframe, _, var_names = generate_data()
+    # dataframe, _, var_names = generate_data()
+    dataframe, _, var_names = load_sports_data()
 
     tau_max = 1  # the number of lags
 
     pc_alpha = 0.01
 
-    # TODO: use nonlinear conditional independence test
+    """
+    https://github.com/xiangyu-sun-789/tigramite#overview
+    
+    Conditional independence test 	        Assumptions
+    
+    ParCorr 	                            univariate, continuous, linear Gaussian dependencies
+    GPDC / GPDCtorch 	                    univariate, continuous, additive dependencies
+    CMIknn 	                                multivariate, continuous, general dependencies
+    CMIsymb 	                            univariate, discrete/categorical dependencies
+    """
     cond_ind_test = ParCorr(significance='analytic')
+    # cond_ind_test = CMIknn()
 
     """
     ##########################
@@ -148,6 +187,7 @@ if __name__ == "__main__":
         figsize=(8, 8),
         node_size=0.05,
         val_matrix=val_matrix_pcmciplus,
+        # val_matrix=None,
         link_matrix=graph_pcmciplus,
         var_names=var_names,
         link_colorbar_label='MCI for PCMCI+',
@@ -159,6 +199,7 @@ if __name__ == "__main__":
         figsize=(8, 8),
         node_size=0.05,
         val_matrix=val_matrix_lpcmci,
+        # val_matrix=None,
         link_matrix=graph_lpcmci,
         var_names=var_names,
         link_colorbar_label='MCI for LPCMCI',
