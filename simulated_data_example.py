@@ -124,7 +124,7 @@ if __name__ == "__main__":
     CMIsymb 	                            univariate, discrete/categorical dependencies
     """
     cond_ind_test = ParCorr(significance='analytic')
-    # cond_ind_test = CMIknn()
+    # cond_ind_test = CMIknn() # TODO: use nonlinear conditional independence test, got errors about gcc
 
     """
     ##########################
@@ -167,7 +167,7 @@ if __name__ == "__main__":
 
     """
     ##########################
-    ##### Draw Graph #####
+    ##### Draw Graphs #####
     ##########################
     """
 
@@ -180,12 +180,15 @@ if __name__ == "__main__":
     
     `val_matrix` can be used to indicate the strength of links. 
     Set it to `None` if we want edges in the same colour.
+    
+    MCI: momentary conditional independence
     """
 
     # Plot time series graph for PCMCI+
     tp.plot_time_series_graph(
         figsize=(8, 8),
         node_size=0.05,
+        arrow_linewidth=5,
         val_matrix=val_matrix_pcmciplus,
         # val_matrix=None,
         link_matrix=graph_pcmciplus,
@@ -198,6 +201,7 @@ if __name__ == "__main__":
     tp.plot_time_series_graph(
         figsize=(8, 8),
         node_size=0.05,
+        arrow_linewidth=5,
         val_matrix=val_matrix_lpcmci,
         # val_matrix=None,
         link_matrix=graph_lpcmci,
